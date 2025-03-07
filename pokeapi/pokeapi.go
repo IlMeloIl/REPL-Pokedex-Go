@@ -31,10 +31,27 @@ type pokemonEncountersStruct struct {
 }
 
 type Pokemon struct {
-	name string
+	Name   string
+	Height int
+	Weight int
+	Stats  map[string]int
+	Types  []string
 }
 
 type catchPokemonStruct struct {
+	Height int `json:"height"`
+	Weight int `json:"weight"`
+	Stats  []struct {
+		BaseStat int `json:"base_stat"`
+		Stat     struct {
+			Name string `json:"name"`
+		} `json:"stat"`
+	} `json:"stats"`
+	Types []struct {
+		Type struct {
+			Name string `json:"name"`
+		} `json:"type"`
+	} `json:"types"`
 	BaseExperience int `json:"base_experience"`
 }
 
@@ -131,18 +148,28 @@ func attemptCatch(baseExperience int) bool {
 func TryCatchPokemon(pokemonName string, pokedex map[string]Pokemon) error {
 	pokemonUrl := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", pokemonName)
 
-	var base catchPokemonStruct
+	var pokemon catchPokemonStruct
 
-	err := fetchFromApi(pokemonUrl, &base, nil, false)
+	err := fetchFromApi(pokemonUrl, &pokemon, nil, false)
 	if err != nil {
 		fmt.Println("Pokemon not found")
 		return fmt.Errorf("Pokemon not found")
 	}
 
 	fmt.Printf("Throwing a Pokeball at %s...\n", pokemonName)
-	if attemptCatch(base.BaseExperience) {
+	if attemptCatch(pokemon.BaseExperience) {
 		fmt.Printf("%s was caught!\n", pokemonName)
-		pokedex[pokemonName] = Pokemon{name: pokemonName}
+		statsMap := make(map[string]int)
+		for _, stat := range pokemon.Stats {
+			statsMap[stat.Stat.Name] = stat.BaseStat
+		}
+
+		types := make([]string, 0, len(pokemon.Types))
+		for _, t := range pokemon.Types {
+			types = append(types, t.Type.Name)
+		}
+
+		pokedex[pokemonName] = Pokemon{Name: pokemonName, Height: pokemon.Height, Weight: pokemon.Weight, Stats: statsMap, Types: types}
 	} else {
 		fmt.Printf("%s escaped!\n", pokemonName)
 	}

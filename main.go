@@ -97,6 +97,32 @@ func main() {
 				return err
 			},
 		},
+		"inspect": {
+			name:        "inspect",
+			description: "Inspect Pokemon that's already caught",
+			callback: func(s []string) error {
+				if len(s) < 2 {
+					return fmt.Errorf("missing Pokemon name. Usage: inspect <Pokemon name>")
+				}
+				pokemon, ok := pokedex[s[1]]
+				if ok {
+					fmt.Printf("Name: %s\n", pokemon.Name)
+					fmt.Printf("Height: %d\n", pokemon.Height)
+					fmt.Printf("Weight: %d\n", pokemon.Weight)
+					fmt.Printf("Stats:\n")
+					for k, v := range pokemon.Stats {
+						fmt.Printf(" -%s: %d\n", k, v)
+					}
+					fmt.Printf("Types:\n")
+					for _, type1 := range pokemon.Types {
+						fmt.Printf(" - %s\n", type1)
+					}
+				} else {
+					fmt.Println("you have not caught that Pokemon")
+				}
+				return nil
+			},
+		},
 		"exit": {
 			name:        "exit",
 			description: "Exit the Pokedex",
