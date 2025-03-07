@@ -14,18 +14,18 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func([]string) error
 }
 
 var cliCommandsMap = map[string]cliCommand{}
 
-func commandExit() error {
+func commandExit(s []string) error {
 	fmt.Printf("Closing the Pokedex... Goodbye!\n")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp() error {
+func commandHelp(s []string) error {
 	fmt.Printf("Welcome to the Pokedex!\n")
 	fmt.Printf("Usage:\n\n")
 	for _, v := range cliCommandsMap {
@@ -38,6 +38,7 @@ var sharedOffset int32 = 0
 
 func main() {
 	cache := cache.NewCache(10 * time.Second)
+	pokedex := make(map[string]api.Pokemon)
 	cliCommandsMap = map[string]cliCommand{
 		"help": {
 			name:        "help",
@@ -47,7 +48,7 @@ func main() {
 		"map": {
 			name:        "map",
 			description: "Displays the names of the next 20 locations areas",
-			callback: func() error {
+			callback: func(s []string) error {
 				currentOffset := atomic.LoadInt32(&sharedOffset)
 				err := api.DisplayLocationAreas(int(currentOffset), cache)
 				if err == nil {
@@ -59,7 +60,7 @@ func main() {
 		"mapb": {
 			name:        "mapb",
 			description: "Displays the names of the previous 20 locations areas",
-			callback: func() error {
+			callback: func(s []string) error {
 				currentOffset := atomic.LoadInt32(&sharedOffset)
 				newOffset := currentOffset - 40
 				if newOffset < 0 {
@@ -71,6 +72,28 @@ func main() {
 				if err == nil {
 					atomic.StoreInt32(&sharedOffset, newOffset)
 				}
+				return err
+			},
+		},
+		"explore": {
+			name:        "explore",
+			description: "List all Pokemon in an area",
+			callback: func(s []string) error {
+				if len(s) < 2 {
+					return fmt.Errorf("missing location area name. Usage: explore <area name>")
+				}
+				err := api.DisplayPokemonInArea(s[1], cache)
+				return err
+			},
+		},
+		"catch": {
+			name:        "catch",
+			description: "Try to catch a Pokemon",
+			callback: func(s []string) error {
+				if len(s) < 2 {
+					return fmt.Errorf("missing Pokemon name. Usage: catch <Pokemon name>")
+				}
+				err := api.TryCatchPokemon(s[1], pokedex)
 				return err
 			},
 		},
@@ -92,13 +115,14 @@ func main() {
 			fmt.Println(x)
 		}
 
-		command := strings.TrimSpace(scanner.Text())
-		if command == "" {
+		command := strings.Fields(strings.TrimSpace(scanner.Text()))
+
+		if len(command) == 0 {
 			continue
 		}
 
-		if cmd, ok := cliCommandsMap[command]; ok {
-			cmd.callback()
+		if cmd, ok := cliCommandsMap[command[0]]; ok {
+			cmd.callback(command)
 
 		} else {
 			fmt.Printf("Unknown command\n")
