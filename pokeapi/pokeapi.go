@@ -170,6 +170,7 @@ func TryCatchPokemon(pokemonName string, pokedex map[string]Pokemon) error {
 		}
 
 		pokedex[pokemonName] = Pokemon{Name: pokemonName, Height: pokemon.Height, Weight: pokemon.Weight, Stats: statsMap, Types: types}
+		fmt.Println("You may now inspect it with the inspect command.")
 	} else {
 		fmt.Printf("%s escaped!\n", pokemonName)
 	}

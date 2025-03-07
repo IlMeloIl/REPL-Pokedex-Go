@@ -93,7 +93,7 @@ func main() {
 				if len(s) < 2 {
 					return fmt.Errorf("missing Pokemon name. Usage: catch <Pokemon name>")
 				}
-				err := api.TryCatchPokemon(s[1], pokedex)
+				err := api.TryCatchPokemon(strings.TrimSpace(strings.ToLower(s[1])), pokedex)
 				return err
 			},
 		},
@@ -120,6 +120,18 @@ func main() {
 				} else {
 					fmt.Println("you have not caught that Pokemon")
 				}
+				return nil
+			},
+		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "See which Pokemon you've caught",
+			callback: func(s []string) error {
+				fmt.Println("Your Pokedex:")
+				for _, v := range pokedex {
+					fmt.Printf(" - %s\n", v.Name)
+				}
+
 				return nil
 			},
 		},
